@@ -1,0 +1,35 @@
+model PurchaseDraft {
+  id              String              @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organizationId  String              @map("organization_id") @db.Uuid
+  branchId        String              @unique(map: "purchase_drafts_branch_id_key") @map("branch_id") @db.Uuid
+  supplierId      String?             @map("supplier_id") @db.Uuid
+  updatedByUserId String?             @map("updated_by_user_id") @db.Uuid
+  note            String?
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "purchase_drafts_organization_id_fkey")
+  branch          Branch              @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "purchase_drafts_branch_id_fkey")
+  supplier        Supplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull, map: "purchase_drafts_supplier_id_fkey")
+  updatedBy       User?               @relation(fields: [updatedByUserId], references: [id], onDelete: SetNull, map: "purchase_drafts_updated_by_user_id_fkey")
+  items           PurchaseDraftItem[]
+
+  @@index([organizationId], map: "purchase_drafts_organization_id_idx")
+  @@index([supplierId], map: "purchase_drafts_supplier_id_idx")
+  @@index([updatedByUserId], map: "purchase_drafts_updated_by_user_id_idx")
+  @@map("purchase_drafts")
+}
+
+model PurchaseDraftItem {
+  id                String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  draftId           String           @map("draft_id") @db.Uuid
+  productId         String           @map("product_id") @db.Uuid
+  requestedQuantity Decimal          @map("requested_quantity") @db.Decimal(14, 3)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  draft             PurchaseDraft    @relation(fields: [draftId], references: [id], onDelete: Cascade, map: "purchase_draft_items_draft_id_fkey")
+  product           InventoryProduct @relation(fields: [productId], references: [id], onDelete: Cascade, map: "purchase_draft_items_product_id_fkey")
+
+  @@unique([draftId, productId], map: "purchase_draft_items_draft_id_product_id_key")
+  @@index([productId], map: "purchase_draft_items_product_id_idx")
+  @@map("purchase_draft_items")
+}

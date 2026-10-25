@@ -1,0 +1,147 @@
+enum WorkspaceRole {
+  owner
+  chef
+  administrator
+
+  @@map("workspace_role")
+}
+
+enum SupplierLedgerEntryType {
+  invoice
+  payment
+  adjustment
+
+  @@map("supplier_ledger_entry_type")
+}
+
+model Organization {
+  id                 String                   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  name               String
+  createdAt          DateTime                 @default(now()) @map("created_at")
+  updatedAt          DateTime                 @updatedAt @map("updated_at")
+  branches           Branch[]
+  memberships        OrganizationMembership[]
+  suppliers          Supplier[]
+  ledgerEntries      SupplierLedgerEntry[]
+  inventoryProducts  InventoryProduct[]
+  inventoryMovements InventoryMovement[]
+  purchaseInvoices   PurchaseInvoice[]
+  dishCards          DishCard[]
+  purchaseDrafts     PurchaseDraft[]
+  staffEmployees     StaffEmployee[]
+  staffEvents        StaffEvent[]
+  salesShifts        SalesShift[]
+
+  @@map("organizations")
+}
+
+model Branch {
+  id                 String                @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organizationId     String                @map("organization_id") @db.Uuid
+  name               String
+  address            String?
+  timezone           String                @default("Europe/Moscow")
+  isActive           Boolean               @default(true) @map("is_active")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
+  organization       Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "branches_organization_id_fkey")
+  ledgerEntries      SupplierLedgerEntry[]
+  inventoryBalances  InventoryBalance[]
+  inventoryMovements InventoryMovement[]
+  purchaseInvoices   PurchaseInvoice[]
+  dishCards           DishCard[]
+  purchaseDraft       PurchaseDraft?
+  staffEmployees      StaffEmployee[]
+  staffEvents         StaffEvent[]
+  salesShifts         SalesShift[]
+  activeMemberships   OrganizationMembership[]       @relation("active_membership_branch")
+  membershipAccesses  OrganizationMembershipBranch[]
+
+  @@unique([organizationId, name], map: "branches_organization_id_name_key")
+  @@index([organizationId, isActive], map: "branches_organization_id_is_active_idx")
+  @@map("branches")
+}
+
+model OrganizationMembership {
+  id             String        @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organizationId String        @map("organization_id") @db.Uuid
+  userId         String        @map("user_id") @db.Uuid
+  role           WorkspaceRole
+  activeBranchId String?       @map("active_branch_id") @db.Uuid
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "organization_memberships_organization_id_fkey")
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "organization_memberships_user_id_fkey")
+  activeBranch   Branch?       @relation("active_membership_branch", fields: [activeBranchId], references: [id], onDelete: SetNull, map: "organization_memberships_active_branch_id_fkey")
+  branchAccesses OrganizationMembershipBranch[]
+
+  @@unique([organizationId, userId], map: "organization_memberships_organization_id_user_id_key")
+  @@index([userId], map: "organization_memberships_user_id_idx")
+  @@map("organization_memberships")
+}
+
+model OrganizationMembershipBranch {
+  membershipId String                 @map("membership_id") @db.Uuid
+  branchId     String                 @map("branch_id") @db.Uuid
+  createdAt    DateTime               @default(now()) @map("created_at")
+  membership  OrganizationMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade, map: "organization_membership_branches_membership_id_fkey")
+  branch      Branch                 @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "organization_membership_branches_branch_id_fkey")
+
+  @@id([membershipId, branchId], map: "organization_membership_branches_pkey")
+  @@index([branchId], map: "organization_membership_branches_branch_id_idx")
+  @@map("organization_membership_branches")
+}
+
+model Supplier {
+  id               String                @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organizationId   String                @map("organization_id") @db.Uuid
+  name             String
+  legalName        String?               @map("legal_name")
+  taxId            String?               @map("tax_id")
+  registrationReasonCode String?         @map("registration_reason_code")
+  registrationNumber String?             @map("registration_number")
+  legalAddress     String?               @map("legal_address")
+  bankName         String?               @map("bank_name")
+  bankBik          String?               @map("bank_bik")
+  correspondentAccount String?           @map("correspondent_account")
+  settlementAccount String?              @map("settlement_account")
+  contactName      String?               @map("contact_name")
+  phone            String?
+  whatsappPhone    String?               @map("whatsapp_phone")
+  paymentTermsDays Int                   @default(0) @map("payment_terms_days")
+  isActive         Boolean               @default(true) @map("is_active")
+  createdAt        DateTime              @default(now()) @map("created_at")
+  updatedAt        DateTime              @updatedAt @map("updated_at")
+  organization     Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "suppliers_organization_id_fkey")
+  ledgerEntries    SupplierLedgerEntry[]
+  purchaseInvoices PurchaseInvoice[]
+  purchaseDrafts   PurchaseDraft[]
+
+  @@unique([organizationId, name], map: "suppliers_organization_id_name_key")
+  @@index([organizationId, isActive], map: "suppliers_organization_id_is_active_idx")
+  @@map("suppliers")
+}
+
+model SupplierLedgerEntry {
+  id                String                  @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organizationId    String                  @map("organization_id") @db.Uuid
+  branchId          String?                 @map("branch_id") @db.Uuid
+  supplierId        String                  @map("supplier_id") @db.Uuid
+  type              SupplierLedgerEntryType
+  amount            Decimal                 @db.Decimal(14, 2)
+  occurredAt        DateTime                @map("occurred_at")
+  dueAt             DateTime?               @map("due_at")
+  reference         String?
+  note              String?
+  createdAt         DateTime                @default(now()) @map("created_at")
+  organization      Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "supplier_ledger_entries_organization_id_fkey")
+  branch            Branch?                 @relation(fields: [branchId], references: [id], onDelete: SetNull, map: "supplier_ledger_entries_branch_id_fkey")
+  supplier          Supplier                @relation(fields: [supplierId], references: [id], onDelete: Cascade, map: "supplier_ledger_entries_supplier_id_fkey")
+  purchaseInvoiceId String?                 @unique(map: "supplier_ledger_entries_purchase_invoice_id_key") @map("purchase_invoice_id") @db.Uuid
+  purchaseInvoice   PurchaseInvoice?        @relation(fields: [purchaseInvoiceId], references: [id], onDelete: SetNull, map: "supplier_ledger_entries_purchase_invoice_id_fkey")
+
+  @@index([organizationId, occurredAt], map: "supplier_ledger_entries_organization_id_occurred_at_idx")
+  @@index([supplierId, occurredAt], map: "supplier_ledger_entries_supplier_id_occurred_at_idx")
+  @@index([dueAt], map: "supplier_ledger_entries_due_at_idx")
+  @@map("supplier_ledger_entries")
+}

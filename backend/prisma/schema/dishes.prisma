@@ -1,0 +1,57 @@
+model DishCard {
+  id              String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organizationId  String           @map("organization_id") @db.Uuid
+  branchId        String           @map("branch_id") @db.Uuid
+  createdByUserId String?          @map("created_by_user_id") @db.Uuid
+  name            String
+  category        String?
+  photoPath       String?          @map("photo_path")
+  photoObjectKey  String?          @unique(map: "dish_cards_photo_object_key_key") @map("photo_object_key")
+  sellingPrice    Decimal?         @map("selling_price") @db.Decimal(14, 2)
+  isActive        Boolean          @default(true) @map("is_active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "dish_cards_organization_id_fkey")
+  branch          Branch           @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "dish_cards_branch_id_fkey")
+  createdBy       User?            @relation("dish_card_created_by", fields: [createdByUserId], references: [id], onDelete: SetNull, map: "dish_cards_created_by_user_id_fkey")
+  ingredients     DishIngredient[]
+  photoUploads    DishPhotoUpload[]
+  salesShiftLines SalesShiftLine[]
+
+  @@unique([branchId, name], map: "dish_cards_branch_id_name_key")
+  @@index([organizationId, isActive], map: "dish_cards_organization_id_is_active_idx")
+  @@index([createdByUserId], map: "dish_cards_created_by_user_id_idx")
+  @@map("dish_cards")
+}
+
+model DishPhotoUpload {
+  id              String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  dishId          String   @map("dish_id") @db.Uuid
+  createdByUserId String?  @map("created_by_user_id") @db.Uuid
+  objectKey       String   @unique(map: "dish_photo_uploads_object_key_key") @map("object_key")
+  contentType     String   @map("content_type")
+  byteSize        Int      @map("byte_size")
+  expiresAt       DateTime @map("expires_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  dish            DishCard @relation(fields: [dishId], references: [id], onDelete: Cascade, map: "dish_photo_uploads_dish_id_fkey")
+  createdBy       User?    @relation(fields: [createdByUserId], references: [id], onDelete: SetNull, map: "dish_photo_uploads_created_by_user_id_fkey")
+
+  @@index([dishId, createdAt], map: "dish_photo_uploads_dish_id_created_at_idx")
+  @@index([createdByUserId], map: "dish_photo_uploads_created_by_user_id_idx")
+  @@index([expiresAt], map: "dish_photo_uploads_expires_at_idx")
+  @@map("dish_photo_uploads")
+}
+
+model DishIngredient {
+  id        String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  dishId    String           @map("dish_id") @db.Uuid
+  productId String           @map("product_id") @db.Uuid
+  position  Int
+  quantity  Decimal          @db.Decimal(14, 3)
+  dish      DishCard         @relation(fields: [dishId], references: [id], onDelete: Cascade, map: "dish_ingredients_dish_id_fkey")
+  product   InventoryProduct @relation(fields: [productId], references: [id], onDelete: Cascade, map: "dish_ingredients_product_id_fkey")
+
+  @@unique([dishId, productId], map: "dish_ingredients_dish_id_product_id_key")
+  @@index([productId], map: "dish_ingredients_product_id_idx")
+  @@map("dish_ingredients")
+}

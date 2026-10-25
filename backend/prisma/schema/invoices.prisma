@@ -1,0 +1,75 @@
+enum PurchaseInvoiceStatus {
+  upload_pending
+  review
+  confirmed
+  rejected
+
+  @@map("purchase_invoice_status")
+}
+
+enum InvoiceRecognitionMode {
+  demo
+  provider
+
+  @@map("invoice_recognition_mode")
+}
+
+model PurchaseInvoice {
+  id                    String                 @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organizationId        String                 @map("organization_id") @db.Uuid
+  branchId              String                 @map("branch_id") @db.Uuid
+  supplierId            String?                @map("supplier_id") @db.Uuid
+  createdByUserId       String?                @map("created_by_user_id") @db.Uuid
+  confirmedByUserId     String?                @map("confirmed_by_user_id") @db.Uuid
+  status                PurchaseInvoiceStatus  @default(upload_pending)
+  recognitionMode       InvoiceRecognitionMode @default(demo) @map("recognition_mode")
+  recognitionConfidence Decimal?               @map("recognition_confidence") @db.Decimal(5, 4)
+  objectKey             String                 @unique(map: "purchase_invoices_object_key_key") @map("object_key")
+  contentType           String                 @map("content_type")
+  byteSize              Int                    @map("byte_size")
+  uploadExpiresAt       DateTime               @map("upload_expires_at")
+  invoiceNumber         String?                @map("invoice_number")
+  invoiceDate           DateTime?              @map("invoice_date") @db.Date
+  dueAt                 DateTime?              @map("due_at") @db.Date
+  totalAmount           Decimal?               @map("total_amount") @db.Decimal(14, 2)
+  recognizedAt          DateTime?              @map("recognized_at")
+  confirmedAt           DateTime?              @map("confirmed_at")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "purchase_invoices_organization_id_fkey")
+  branch                Branch                 @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "purchase_invoices_branch_id_fkey")
+  supplier              Supplier?              @relation(fields: [supplierId], references: [id], onDelete: SetNull, map: "purchase_invoices_supplier_id_fkey")
+  createdBy             User?                  @relation("purchase_invoice_created_by", fields: [createdByUserId], references: [id], onDelete: SetNull, map: "purchase_invoices_created_by_user_id_fkey")
+  confirmedBy           User?                  @relation("purchase_invoice_confirmed_by", fields: [confirmedByUserId], references: [id], onDelete: SetNull, map: "purchase_invoices_confirmed_by_user_id_fkey")
+  items                 PurchaseInvoiceItem[]
+  inventoryMovements    InventoryMovement[]
+  ledgerEntry           SupplierLedgerEntry?
+
+  @@index([organizationId, createdAt], map: "purchase_invoices_organization_id_created_at_idx")
+  @@index([branchId, status], map: "purchase_invoices_branch_id_status_idx")
+  @@index([branchId, invoiceDate, createdAt], map: "purchase_invoices_branch_id_invoice_date_created_at_idx")
+  @@index([supplierId], map: "purchase_invoices_supplier_id_idx")
+  @@index([createdByUserId], map: "purchase_invoices_created_by_user_id_idx")
+  @@index([confirmedByUserId], map: "purchase_invoices_confirmed_by_user_id_idx")
+  @@map("purchase_invoices")
+}
+
+model PurchaseInvoiceItem {
+  id           String            @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  invoiceId    String            @map("invoice_id") @db.Uuid
+  productId    String?           @map("product_id") @db.Uuid
+  position     Int
+  detectedName String            @map("detected_name")
+  unit         InventoryUnit
+  quantity     Decimal           @db.Decimal(14, 3)
+  unitPrice    Decimal           @map("unit_price") @db.Decimal(14, 2)
+  lineTotal    Decimal           @map("line_total") @db.Decimal(14, 2)
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  invoice      PurchaseInvoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade, map: "purchase_invoice_items_invoice_id_fkey")
+  product      InventoryProduct? @relation(fields: [productId], references: [id], onDelete: SetNull, map: "purchase_invoice_items_product_id_fkey")
+
+  @@unique([invoiceId, position], map: "purchase_invoice_items_invoice_id_position_key")
+  @@index([productId], map: "purchase_invoice_items_product_id_idx")
+  @@map("purchase_invoice_items")
+}

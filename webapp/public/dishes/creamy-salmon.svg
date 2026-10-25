@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Лосось в сливочном соусе">
+  <defs><linearGradient id="b" x1="0" x2="1" y2="1"><stop stop-color="#20231f"/><stop offset="1" stop-color="#595745"/></linearGradient><linearGradient id="s" x1="0" x2="1"><stop stop-color="#f5a27c"/><stop offset="1" stop-color="#d95f52"/></linearGradient></defs>
+  <rect width="1200" height="800" fill="url(#b)"/><ellipse cx="600" cy="470" rx="430" ry="225" fill="#efe8d8"/><ellipse cx="600" cy="480" rx="350" ry="170" fill="#f7efd4"/>
+  <path d="M330 470c100-150 410-200 560-15-70 155-430 210-560 15z" fill="url(#s)"/><path d="M390 460c120-70 300-95 440-25" fill="none" stroke="#ffd1b6" stroke-width="24" stroke-linecap="round"/><path d="M420 525c120 25 260 5 370-45" fill="none" stroke="#fff1d6" stroke-width="20" stroke-linecap="round"/>
+  <g fill="#6ea766"><circle cx="365" cy="350" r="30"/><circle cx="840" cy="330" r="28"/><circle cx="875" cy="540" r="24"/></g><g fill="#dbb84d"><circle cx="490" cy="600" r="13"/><circle cx="700" cy="300" r="11"/><circle cx="800" cy="570" r="10"/></g>
+</svg>

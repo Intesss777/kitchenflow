@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Филадельфия">
+  <defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#172027"/><stop offset="1" stop-color="#303a36"/></linearGradient><radialGradient id="p"><stop stop-color="#ffd0b6"/><stop offset="1" stop-color="#e58f72"/></radialGradient></defs>
+  <rect width="1200" height="800" fill="url(#b)"/><ellipse cx="600" cy="470" rx="420" ry="210" fill="#e9e4da"/><ellipse cx="600" cy="485" rx="350" ry="155" fill="#c9c3b9" opacity=".55"/>
+  <g stroke="#f8ede0" stroke-width="18"><circle cx="430" cy="420" r="112" fill="url(#p)"/><circle cx="620" cy="370" r="112" fill="url(#p)"/><circle cx="770" cy="480" r="112" fill="url(#p)"/></g>
+  <g fill="#fffaf2"><circle cx="430" cy="420" r="64"/><circle cx="620" cy="370" r="64"/><circle cx="770" cy="480" r="64"/></g><g fill="#8fc5a0"><circle cx="430" cy="420" r="25"/><circle cx="620" cy="370" r="25"/><circle cx="770" cy="480" r="25"/></g>
+  <g fill="#a9d372"><ellipse cx="320" cy="330" rx="35" ry="80" transform="rotate(-35 320 330)"/><ellipse cx="865" cy="350" rx="30" ry="76" transform="rotate(30 865 350)"/></g>
+</svg>

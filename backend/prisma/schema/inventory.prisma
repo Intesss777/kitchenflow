@@ -1,0 +1,85 @@
+enum InventoryUnit {
+  kilogram
+  gram
+  liter
+  milliliter
+  piece
+
+  @@map("inventory_unit")
+}
+
+enum InventoryMovementType {
+  receipt
+  writeoff
+  stocktake
+
+  @@map("inventory_movement_type")
+}
+
+model InventoryProduct {
+  id                   String                @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organizationId       String                @map("organization_id") @db.Uuid
+  name                 String
+  category             String?
+  unit                 InventoryUnit
+  minimumQuantity      Decimal               @default(0) @map("minimum_quantity") @db.Decimal(14, 3)
+  unitCost             Decimal               @default(0) @map("unit_cost") @db.Decimal(14, 2)
+  isActive             Boolean               @default(true) @map("is_active")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "inventory_products_organization_id_fkey")
+  balances             InventoryBalance[]
+  movements            InventoryMovement[]
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+  dishIngredients      DishIngredient[]
+  purchaseDraftItems   PurchaseDraftItem[]
+  salesShiftConsumption SalesShiftConsumption[]
+
+  @@unique([organizationId, name], map: "inventory_products_organization_id_name_key")
+  @@index([organizationId, isActive], map: "inventory_products_organization_id_is_active_idx")
+  @@map("inventory_products")
+}
+
+model InventoryBalance {
+  branchId  String           @map("branch_id") @db.Uuid
+  productId String           @map("product_id") @db.Uuid
+  quantity  Decimal          @default(0) @db.Decimal(14, 3)
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  branch    Branch           @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "inventory_balances_branch_id_fkey")
+  product   InventoryProduct @relation(fields: [productId], references: [id], onDelete: Cascade, map: "inventory_balances_product_id_fkey")
+
+  @@id([branchId, productId], map: "inventory_balances_pkey")
+  @@index([productId], map: "inventory_balances_product_id_idx")
+  @@map("inventory_balances")
+}
+
+model InventoryMovement {
+  id                String                @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organizationId    String                @map("organization_id") @db.Uuid
+  branchId          String                @map("branch_id") @db.Uuid
+  productId         String                @map("product_id") @db.Uuid
+  createdByUserId   String?               @map("created_by_user_id") @db.Uuid
+  type              InventoryMovementType
+  quantityDelta     Decimal               @map("quantity_delta") @db.Decimal(14, 3)
+  resultingQuantity Decimal               @map("resulting_quantity") @db.Decimal(14, 3)
+  unitCost          Decimal?              @map("unit_cost") @db.Decimal(14, 2)
+  occurredAt        DateTime              @map("occurred_at")
+  reference         String?
+  note              String?
+  createdAt         DateTime              @default(now()) @map("created_at")
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "inventory_movements_organization_id_fkey")
+  branch            Branch                @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "inventory_movements_branch_id_fkey")
+  product           InventoryProduct      @relation(fields: [productId], references: [id], onDelete: Cascade, map: "inventory_movements_product_id_fkey")
+  createdBy         User?                 @relation(fields: [createdByUserId], references: [id], onDelete: SetNull, map: "inventory_movements_created_by_user_id_fkey")
+  purchaseInvoiceId String?               @map("purchase_invoice_id") @db.Uuid
+  purchaseInvoice   PurchaseInvoice?      @relation(fields: [purchaseInvoiceId], references: [id], onDelete: SetNull, map: "inventory_movements_purchase_invoice_id_fkey")
+  salesShiftId      String?               @map("sales_shift_id") @db.Uuid
+  salesShift        SalesShift?           @relation(fields: [salesShiftId], references: [id], onDelete: SetNull, map: "inventory_movements_sales_shift_id_fkey")
+
+  @@index([organizationId, occurredAt], map: "inventory_movements_organization_id_occurred_at_idx")
+  @@index([branchId, productId, occurredAt], map: "inventory_movements_branch_id_product_id_occurred_at_idx")
+  @@index([createdByUserId], map: "inventory_movements_created_by_user_id_idx")
+  @@index([purchaseInvoiceId], map: "inventory_movements_purchase_invoice_id_idx")
+  @@index([salesShiftId], map: "inventory_movements_sales_shift_id_idx")
+  @@map("inventory_movements")
+}

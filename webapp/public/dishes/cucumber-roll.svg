@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Ролл с огурцом">
+  <defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#18251f"/><stop offset="1" stop-color="#475b46"/></linearGradient></defs>
+  <rect width="1200" height="800" fill="url(#b)"/><ellipse cx="600" cy="470" rx="420" ry="215" fill="#dad5c9"/>
+  <g stroke="#24372d" stroke-width="25" fill="#fbf7e9"><circle cx="410" cy="400" r="105"/><circle cx="610" cy="350" r="105"/><circle cx="785" cy="470" r="105"/><circle cx="545" cy="535" r="105"/></g>
+  <g fill="#85c87d" stroke="#d8efb5" stroke-width="12"><circle cx="410" cy="400" r="42"/><circle cx="610" cy="350" r="42"/><circle cx="785" cy="470" r="42"/><circle cx="545" cy="535" r="42"/></g>
+  <g fill="#b9da70"><ellipse cx="320" cy="300" rx="28" ry="75" transform="rotate(-40 320 300)"/><ellipse cx="900" cy="350" rx="26" ry="70" transform="rotate(38 900 350)"/></g>
+</svg>

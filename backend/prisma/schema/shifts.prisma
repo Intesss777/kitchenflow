@@ -1,0 +1,93 @@
+enum SalesShiftStatus {
+  review
+  confirmed
+
+  @@map("sales_shift_status")
+}
+
+enum SalesReceiptStatus {
+  upload_pending
+  recognized
+  rejected
+
+  @@map("sales_receipt_status")
+}
+
+model SalesShift {
+  id                String                 @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  organizationId    String                 @map("organization_id") @db.Uuid
+  branchId          String                 @map("branch_id") @db.Uuid
+  createdByUserId   String?                @map("created_by_user_id") @db.Uuid
+  confirmedByUserId String?                @map("confirmed_by_user_id") @db.Uuid
+  shiftDate         DateTime               @map("shift_date") @db.Date
+  status            SalesShiftStatus       @default(review)
+  recognitionMode   InvoiceRecognitionMode @default(demo) @map("recognition_mode")
+  confirmedAt       DateTime?              @map("confirmed_at")
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+  organization      Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade, map: "sales_shifts_organization_id_fkey")
+  branch            Branch                 @relation(fields: [branchId], references: [id], onDelete: Cascade, map: "sales_shifts_branch_id_fkey")
+  createdBy         User?                  @relation("sales_shift_created_by", fields: [createdByUserId], references: [id], onDelete: SetNull, map: "sales_shifts_created_by_user_id_fkey")
+  confirmedBy       User?                  @relation("sales_shift_confirmed_by", fields: [confirmedByUserId], references: [id], onDelete: SetNull, map: "sales_shifts_confirmed_by_user_id_fkey")
+  receipts          SalesReceipt[]
+  lines             SalesShiftLine[]
+  consumption       SalesShiftConsumption[]
+  inventoryMovements InventoryMovement[]
+
+  @@unique([branchId, shiftDate], map: "sales_shifts_branch_id_shift_date_key")
+  @@index([organizationId, shiftDate], map: "sales_shifts_organization_id_shift_date_idx")
+  @@index([createdByUserId], map: "sales_shifts_created_by_user_id_idx")
+  @@index([confirmedByUserId], map: "sales_shifts_confirmed_by_user_id_idx")
+  @@map("sales_shifts")
+}
+
+model SalesReceipt {
+  id                    String             @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  shiftId               String             @map("shift_id") @db.Uuid
+  createdByUserId       String?            @map("created_by_user_id") @db.Uuid
+  status                SalesReceiptStatus @default(upload_pending)
+  objectKey             String             @unique(map: "sales_receipts_object_key_key") @map("object_key")
+  contentType           String             @map("content_type")
+  byteSize              Int                @map("byte_size")
+  uploadExpiresAt       DateTime           @map("upload_expires_at")
+  recognitionConfidence Decimal?           @map("recognition_confidence") @db.Decimal(5, 4)
+  recognizedAt          DateTime?          @map("recognized_at")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  shift                 SalesShift         @relation(fields: [shiftId], references: [id], onDelete: Cascade, map: "sales_receipts_shift_id_fkey")
+  createdBy             User?              @relation(fields: [createdByUserId], references: [id], onDelete: SetNull, map: "sales_receipts_created_by_user_id_fkey")
+
+  @@index([shiftId, createdAt], map: "sales_receipts_shift_id_created_at_idx")
+  @@index([createdByUserId], map: "sales_receipts_created_by_user_id_idx")
+  @@index([uploadExpiresAt], map: "sales_receipts_upload_expires_at_idx")
+  @@map("sales_receipts")
+}
+
+model SalesShiftLine {
+  id        String     @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  shiftId   String     @map("shift_id") @db.Uuid
+  dishId    String     @map("dish_id") @db.Uuid
+  position  Int
+  quantity  Int
+  shift     SalesShift @relation(fields: [shiftId], references: [id], onDelete: Cascade, map: "sales_shift_lines_shift_id_fkey")
+  dish      DishCard   @relation(fields: [dishId], references: [id], onDelete: Cascade, map: "sales_shift_lines_dish_id_fkey")
+
+  @@unique([shiftId, dishId], map: "sales_shift_lines_shift_id_dish_id_key")
+  @@unique([shiftId, position], map: "sales_shift_lines_shift_id_position_key")
+  @@index([dishId], map: "sales_shift_lines_dish_id_idx")
+  @@map("sales_shift_lines")
+}
+
+model SalesShiftConsumption {
+  id             String           @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  shiftId        String           @map("shift_id") @db.Uuid
+  productId      String           @map("product_id") @db.Uuid
+  quantityBefore Decimal          @map("quantity_before") @db.Decimal(14, 3)
+  quantityUsed   Decimal          @map("quantity_used") @db.Decimal(14, 3)
+  quantityAfter  Decimal          @map("quantity_after") @db.Decimal(14, 3)
+  shift          SalesShift       @relation(fields: [shiftId], references: [id], onDelete: Cascade, map: "sales_shift_consumption_shift_id_fkey")
+  product        InventoryProduct @relation(fields: [productId], references: [id], onDelete: Cascade, map: "sales_shift_consumption_product_id_fkey")
+
+  @@unique([shiftId, productId], map: "sales_shift_consumption_shift_id_product_id_key")
+  @@index([productId], map: "sales_shift_consumption_product_id_idx")
+  @@map("sales_shift_consumption")
+}
